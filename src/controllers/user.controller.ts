@@ -4,17 +4,14 @@ import {
   Filter,
   FilterExcludingWhere,
   repository,
-  Where,
+  Where
 } from '@loopback/repository';
 import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
+  del, get,
+  getModelSchemaRef, param,
+  patch, post,
   put,
-  del,
-  requestBody,
+  requestBody
 } from '@loopback/rest';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
@@ -22,8 +19,36 @@ import {UserRepository} from '../repositories';
 export class UserController {
   constructor(
     @repository(UserRepository)
-    public userRepository : UserRepository,
+    public userRepository: UserRepository,
   ) {}
+
+  /**
+   * The user signup function
+   */
+  @post('/signup', {
+    responses: {
+      '200': {
+        description: '',
+        content: {'application/json': {schema: getModelSchemaRef(User)}}
+      }
+    }
+  })
+  async signup(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(User, {
+            title: 'User Details',
+            exclude: ['createdOn', 'lastUpdated', 'deleted', 'id'],
+            optional: ['dob'],
+          }),
+        }
+      }
+    }) user: User
+  ) {
+    const emailExists = await this.userRepository.findOne({where: {email: user.email.toLowerCase()}});
+    return
+  }
 
   @post('/users', {
     responses: {
@@ -39,28 +64,19 @@ export class UserController {
         'application/json': {
           schema: getModelSchemaRef(User, {
             title: 'NewUser',
-            
+            exclude: ['createdOn', 'lastUpdated', 'deleted', 'id'],
+            optional: ['dob'],
           }),
         },
       },
     })
     user: User,
   ): Promise<User> {
-    return this.userRepository.create(user);
-  }
+    const now = new Date().toDateString();
+    user.createdOn = now;
+    user.lastUpdated = now;
 
-  @get('/users/count', {
-    responses: {
-      '200': {
-        description: 'User model count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async count(
-    @param.where(User) where?: Where<User>,
-  ): Promise<Count> {
-    return this.userRepository.count(where);
+    return this.userRepository.create(user);
   }
 
   @get('/users', {

@@ -1,7 +1,15 @@
 import {Entity, hasMany, model, property} from '@loopback/repository';
 import {Video} from './video.model';
 
-@model()
+@model({
+  settings: {
+    hiddenProperties: ['password'],// props hidden from response
+    scope: {  // scope applies to each query
+      limit: 2,
+      where: {deleted: false}
+    }
+  }
+})
 export class User extends Entity {
   @property({
     type: 'number',
@@ -13,6 +21,16 @@ export class User extends Entity {
   @property({
     type: 'string',
     required: true,
+    jsonSchema: {
+      format: 'email',
+      minLength: 5,
+      maxLength: 50,
+      transform: ['toLowerCase'],
+    },
+    id: true,
+    index: {
+      unique: true,
+    },
   })
   email: string;
 
@@ -40,6 +58,7 @@ export class User extends Entity {
   lastUpdated: string;
 
   @property({type: 'string', required: false}) dob: string;
+  @property({type: 'boolean', default: false}) deleted: boolean;
 
   @hasMany(() => Video, {keyTo: 'ref'})
   videos: Video[];
@@ -52,5 +71,4 @@ export class User extends Entity {
 export interface UserRelations {
   // describe navigational properties here
 }
-
 export type UserWithRelations = User & UserRelations;
