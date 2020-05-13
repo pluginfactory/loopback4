@@ -7,8 +7,8 @@ const config = {
   url: '',
   host: 'localhost',
   port: 5432,
-  user: 'postgres',
-  password: 'relayhealth',
+  user: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASS,
   database: 'loopback'
 };
 
