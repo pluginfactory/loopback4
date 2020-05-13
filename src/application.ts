@@ -1,14 +1,17 @@
 import {BootMixin} from '@loopback/boot';
-import {ApplicationConfig} from '@loopback/core';
-import {
-  RestExplorerBindings,
-  RestExplorerComponent,
-} from '@loopback/rest-explorer';
+import {ApplicationConfig, BindingScope} from '@loopback/core';
 import {RepositoryMixin} from '@loopback/repository';
 import {RestApplication} from '@loopback/rest';
+import {
+  RestExplorerBindings,
+  RestExplorerComponent
+} from '@loopback/rest-explorer';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
+import {PasswordHasherBindings} from './config';
 import {MySequence} from './sequence';
+import {BcryptHasher} from './services/hash.password.bcrypt';
+
 
 export class StarterApplication extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
@@ -16,6 +19,7 @@ export class StarterApplication extends BootMixin(
   constructor(options: ApplicationConfig = {}) {
     super(options);
 
+    this.setUpBindings();
     // Set up the custom sequence
     this.sequence(MySequence);
 
@@ -38,5 +42,14 @@ export class StarterApplication extends BootMixin(
         nested: true,
       },
     };
+  }
+
+  /**
+   * Set up the application bindings
+   */
+  setUpBindings(): void {
+    console.log('setup bindings');
+    this.bind(PasswordHasherBindings.ROUNDS).to(10);
+    this.bind(PasswordHasherBindings.PASSWORD_HASHER).toClass(BcryptHasher).inScope(BindingScope.SINGLETON);
   }
 }

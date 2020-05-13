@@ -1,3 +1,4 @@
+import {inject} from '@loopback/context';
 import {
   Count,
   CountSchema,
@@ -9,48 +10,35 @@ import {
 import {
   del, get,
   getModelSchemaRef,
+
+
+
+
+
+
+
+
+
+
   param,
-  patch, post,
-  put,
+  patch,
+
+
+  post, put,
   requestBody
 } from '@loopback/rest';
+import {PasswordHasherBindings} from '../config';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
+import {PasswordHasher} from '../services/hash.password.bcrypt';
 
 export class UserController {
   constructor(
     @repository(UserRepository)
     public userRepository: UserRepository,
+    @inject(PasswordHasherBindings.PASSWORD_HASHER)
+    readonly passwordHasher: PasswordHasher,
   ) {}
-
-  /**
-   * The user signup function
-   */
-  @post('/signup', {
-    responses: {
-      '200': {
-        description: '',
-        content: {'application/json': {schema: getModelSchemaRef(User)}}
-      }
-    }
-  })
-  async signup(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(User, {
-            title: 'User Details',
-            exclude: ['createdOn', 'lastUpdated', 'deleted', 'id'],
-            optional: ['dob'],
-          }),
-        }
-      }
-    }) user: User
-  ) {
-    /**
-     * send the verification email to user
-     */
-  }
 
   @post('/users', {
     responses: {
@@ -74,8 +62,14 @@ export class UserController {
     })
     user: User,
   ): Promise<User> {
+    /**
+     * hash the password
+     */
+    const password = await this.passwordHasher.hashPassword(user.password);
+    user.password = password;
     return this.userRepository.createUser(user);
   }
+
 
   @get('/users', {
     responses: {

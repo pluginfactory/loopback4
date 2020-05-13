@@ -1,9 +1,8 @@
-import {Getter, inject} from '@loopback/core';
-import {DefaultCrudRepository, HasManyRepositoryFactory, repository} from '@loopback/repository';
+import {inject} from '@loopback/core';
+import {DefaultCrudRepository} from '@loopback/repository';
 import {HttpErrors} from '@loopback/rest';
 import {PostgresDataSource} from '../datasources';
-import {User, UserRelations, Video} from '../models';
-import {VideoRepository} from './video.repository';
+import {User, UserRelations} from '../models';
 
 export class UserRepository extends DefaultCrudRepository<
   User,
@@ -11,14 +10,10 @@ export class UserRepository extends DefaultCrudRepository<
   UserRelations
   > {
 
-  public readonly videos: HasManyRepositoryFactory<Video, typeof User.prototype.id>;
-
   constructor(
-    @inject('datasources.postgres') dataSource: PostgresDataSource, @repository.getter('VideoRepository') protected videoRepositoryGetter: Getter<VideoRepository>,
+    @inject('datasources.postgres') dataSource: PostgresDataSource,
   ) {
     super(User, dataSource);
-    this.videos = this.createHasManyRepositoryFactoryFor('videos', videoRepositoryGetter,);
-    this.registerInclusionResolver('videos', this.videos.inclusionResolver);
   }
 
   /**

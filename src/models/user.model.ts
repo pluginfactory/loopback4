@@ -1,11 +1,10 @@
-import {Entity, hasMany, model, property} from '@loopback/repository';
-import {Video} from './video.model';
+import {Entity, model, property} from '@loopback/repository';
 
 @model({
   settings: {
     hiddenProperties: ['password'],// props hidden from response
     scope: {  // scope applies to each query
-      limit: 2,
+      limit: 30,
       where: {deleted: false}
     }
   }
@@ -58,9 +57,6 @@ export class User extends Entity {
 
   @property({type: 'string', required: false}) dob: string;
   @property({type: 'boolean', default: false}) deleted: boolean;
-
-  @hasMany(() => Video, {keyTo: 'ref'})
-  videos: Video[];
 
   constructor(data?: Partial<User>) {
     super(data);
