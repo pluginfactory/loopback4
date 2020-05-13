@@ -1,4 +1,4 @@
-import {Entity, model, property, hasMany} from '@loopback/repository';
+import {Entity, hasMany, model, property} from '@loopback/repository';
 import {Video} from './video.model';
 
 @model()
@@ -38,6 +38,8 @@ export class User extends Entity {
     required: true,
   })
   lastUpdated: string;
+
+  @property({type: 'string', required: false}) dob: string;
 
   @hasMany(() => Video, {keyTo: 'ref'})
   videos: Video[];
