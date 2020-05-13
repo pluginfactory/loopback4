@@ -74,7 +74,7 @@ export class UserController {
     })
     user: User,
   ): Promise<User> {
-    return this.userRepository.create(user);
+    return this.userRepository.createUser(user);
   }
 
   @get('/users', {
