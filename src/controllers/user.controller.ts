@@ -8,7 +8,8 @@ import {
 } from '@loopback/repository';
 import {
   del, get,
-  getModelSchemaRef, param,
+  getModelSchemaRef,
+  param,
   patch, post,
   put,
   requestBody
@@ -46,8 +47,9 @@ export class UserController {
       }
     }) user: User
   ) {
-    const emailExists = await this.userRepository.findOne({where: {email: user.email.toLowerCase()}});
-    return
+    /**
+     * send the verification email to user
+     */
   }
 
   @post('/users', {
@@ -72,10 +74,6 @@ export class UserController {
     })
     user: User,
   ): Promise<User> {
-    const now = new Date().toDateString();
-    user.createdOn = now;
-    user.lastUpdated = now;
-
     return this.userRepository.create(user);
   }
 

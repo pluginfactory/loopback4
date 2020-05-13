@@ -8,7 +8,7 @@ import {
   RequestContext,
   RestBindings,
   Send,
-  SequenceHandler,
+  SequenceHandler
 } from '@loopback/rest';
 
 const SequenceActions = RestBindings.SequenceActions;

@@ -27,7 +27,6 @@ export class User extends Entity {
       maxLength: 50,
       transform: ['toLowerCase'],
     },
-    id: true,
     index: {
       unique: true,
     },
