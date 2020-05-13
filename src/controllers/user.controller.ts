@@ -10,20 +10,8 @@ import {
 import {
   del, get,
   getModelSchemaRef,
-
-
-
-
-
-
-
-
-
-
   param,
   patch,
-
-
   post, put,
   requestBody
 } from '@loopback/rest';
