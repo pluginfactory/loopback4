@@ -1,4 +1,5 @@
-import {Entity, model, property} from '@loopback/repository';
+import {Entity, model, property, belongsTo} from '@loopback/repository';
+import {Channel} from './channel.model';
 
 @model()
 export class Video extends Entity {
@@ -37,6 +38,9 @@ export class Video extends Entity {
     type: 'number',
   })
   ref?: number;
+
+  @belongsTo(() => Channel)
+  channelId: number;
 
   constructor(data?: Partial<Video>) {
     super(data);

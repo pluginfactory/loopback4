@@ -9,7 +9,7 @@ export async function migrate(args: string[]) {
   /**
    * Defined models to migrate
    */
-  await app.migrateSchema({existingSchema, models: ['User', 'Video']});
+  await app.migrateSchema({existingSchema, models: ['User', 'Video', 'Channel']});
 
   // Connectors usually keep a pool of opened connections,
   // this keeps the process running even after all work is done.
