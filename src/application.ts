@@ -1,3 +1,4 @@
+import {AuthenticationComponent} from '@loopback/authentication';
 import {BootMixin} from '@loopback/boot';
 import {ApplicationConfig, BindingScope} from '@loopback/core';
 import {RepositoryMixin} from '@loopback/repository';
@@ -8,10 +9,11 @@ import {
 } from '@loopback/rest-explorer';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
-import {PasswordHasherBindings} from './config';
+import {AuthTokenBindings, PasswordHasherBindings, TokenServiceConstants, UserServiceBindings} from './config';
 import {MySequence} from './sequence';
 import {BcryptHasher} from './services/hash.password.bcrypt';
-
+import {JWTService} from './services/jwt.auth';
+import {CustomUserService} from './services/user.service';
 
 export class StarterApplication extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
@@ -19,7 +21,11 @@ export class StarterApplication extends BootMixin(
   constructor(options: ApplicationConfig = {}) {
     super(options);
 
+    // set up the DI
     this.setUpBindings();
+
+    // setup the compoenent related items
+    this.component(AuthenticationComponent);
     // Set up the custom sequence
     this.sequence(MySequence);
 
@@ -45,11 +51,29 @@ export class StarterApplication extends BootMixin(
   }
 
   /**
-   * Set up the application bindings
+   * Set up the application bindings.
+   * This will load all of my custom created services.
+   * Most of the services are defined in services/ directory
+   * @author gaurav sharma
+   * @since 13th May 2020
    */
   setUpBindings(): void {
-    console.log('setup bindings');
+    /**
+     * binding the password hash services
+     */
     this.bind(PasswordHasherBindings.ROUNDS).to(10);
     this.bind(PasswordHasherBindings.PASSWORD_HASHER).toClass(BcryptHasher).inScope(BindingScope.SINGLETON);
+
+    /**
+     * binding the token services
+     */
+    this.bind(AuthTokenBindings.TOKEN_EXPIRES_IN).to(TokenServiceConstants.TOKEN_EXPIRES_IN_VALUE);
+    this.bind(AuthTokenBindings.TOKEN_SECRET).to(TokenServiceConstants.TOKEN_SECRET_VALUE);
+    this.bind(AuthTokenBindings.TOKEN_SERVICE).toClass(JWTService);
+
+    /**
+     * binding the user services
+     */
+    this.bind(UserServiceBindings.USER_SERVICE).toClass(CustomUserService);
   }
 }

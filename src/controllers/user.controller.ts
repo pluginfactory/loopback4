@@ -1,7 +1,7 @@
+import {TokenService} from '@loopback/authentication';
 import {inject} from '@loopback/context';
 import {
   Count,
-  CountSchema,
   Filter,
   FilterExcludingWhere,
   repository,
@@ -9,111 +9,77 @@ import {
 } from '@loopback/repository';
 import {
   del, get,
-  getModelSchemaRef,
   param,
   patch,
-  post, put,
+  post,
   requestBody
 } from '@loopback/rest';
-import {PasswordHasherBindings} from '../config';
+import {AuthTokenBindings, PasswordHasherBindings, UserServiceBindings} from '../config';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
+import {Credentials} from '../repositories/user.repository';
 import {PasswordHasher} from '../services/hash.password.bcrypt';
+import {CustomUserService} from '../services/user.service';
+import {UserSpecs} from './specs/user.controller.specs';
 
+/**
+ * UserController contains the route-model connection by connecting
+ * the routes with the model repository.
+ * @author gaurav sharma
+ * @since 13th May 2020
+ */
 export class UserController {
   constructor(
     @repository(UserRepository)
     public userRepository: UserRepository,
     @inject(PasswordHasherBindings.PASSWORD_HASHER)
     readonly passwordHasher: PasswordHasher,
+    @inject(AuthTokenBindings.TOKEN_SERVICE)
+    readonly jwtService: TokenService,
+    @inject(UserServiceBindings.USER_SERVICE)
+    readonly userService: CustomUserService
   ) {}
 
-  @post('/users', {
-    responses: {
-      '200': {
-        description: 'User model instance',
-        content: {'application/json': {schema: getModelSchemaRef(User)}},
-      },
-    },
-  })
-  async create(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(User, {
-            title: 'NewUser',
-            exclude: ['createdOn', 'lastUpdated', 'deleted', 'id'],
-            optional: ['dob'],
-          }),
-        },
-      },
-    })
-    user: User,
-  ): Promise<User> {
-    /**
-     * hash the password
-     */
+  /**
+   * create/signup a new user
+   * @param user
+   */
+  @post('/users', UserSpecs.create.response)
+  async create(@requestBody(UserSpecs.create.request) user: User,): Promise<User> {
     const password = await this.passwordHasher.hashPassword(user.password);
     user.password = password;
     return this.userRepository.createUser(user);
   }
 
 
-  @get('/users', {
-    responses: {
-      '200': {
-        description: 'Array of User model instances',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: getModelSchemaRef(User, {includeRelations: true}),
-            },
-          },
-        },
-      },
-    },
-  })
-  async find(
-    @param.filter(User) filter?: Filter<User>,
-  ): Promise<User[]> {
+  /**
+   * get all users
+   * @param filter
+   */
+  @get('/users', UserSpecs.get.response)
+  async find(@param.filter(User) filter?: Filter<User>): Promise<User[]> {
     return this.userRepository.find(filter);
   }
 
-  @patch('/users', {
-    responses: {
-      '200': {
-        description: 'User PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
+  /**
+   * Udpate all users where @param where condition matches
+   * @param user
+   * @param where
+   */
+  @patch('/users', UserSpecs.patch.response)
   async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(User, {partial: true}),
-        },
-      },
-    })
-    user: User,
+    @requestBody(UserSpecs.patch.request) user: User,
     @param.where(User) where?: Where<User>,
   ): Promise<Count> {
     return this.userRepository.updateAll(user, where);
   }
 
-  @get('/users/{id}', {
-    responses: {
-      '200': {
-        description: 'User model instance',
-        content: {
-          'application/json': {
-            schema: getModelSchemaRef(User, {includeRelations: true}),
-          },
-        },
-      },
-    },
-  })
+  /**
+   * get user by id
+   * @param id
+   * @param filter
+   */
+  @get('/users/{id}', UserSpecs.getById.response)
   async findById(
     @param.path.number('id') id: number,
     @param.filter(User, {exclude: 'where'}) filter?: FilterExcludingWhere<User>
@@ -121,49 +87,37 @@ export class UserController {
     return this.userRepository.findById(id, filter);
   }
 
-  @patch('/users/{id}', {
-    responses: {
-      '204': {
-        description: 'User PATCH success',
-      },
-    },
-  })
+  /**
+   * patch a user by id
+   * @param id
+   * @param user
+   */
+  @patch('/users/{id}', UserSpecs.patchById.response)
   async updateById(
     @param.path.number('id') id: number,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(User, {partial: true}),
-        },
-      },
-    })
-    user: User,
+    @requestBody(UserSpecs.patchById.request) user: User,
   ): Promise<void> {
     await this.userRepository.updateById(id, user);
   }
 
-  @put('/users/{id}', {
-    responses: {
-      '204': {
-        description: 'User PUT success',
-      },
-    },
-  })
-  async replaceById(
-    @param.path.number('id') id: number,
-    @requestBody() user: User,
-  ): Promise<void> {
-    await this.userRepository.replaceById(id, user);
-  }
-
-  @del('/users/{id}', {
-    responses: {
-      '204': {
-        description: 'User DELETE success',
-      },
-    },
-  })
+  /**
+   * deletes a user with id
+   * @param id
+   */
+  @del('/users/{id}', UserSpecs.delete.response)
   async deleteById(@param.path.number('id') id: number): Promise<void> {
     await this.userRepository.deleteById(id);
+  }
+
+  /**
+   * user authentication
+   */
+  @post('/users/authenticate', UserSpecs.authentication.response)
+  async authenticate(@requestBody(UserSpecs.authentication.request) credentials: Credentials): Promise<{token: string}> {
+    const user = await this.userRepository.getUserByCredential(credentials);
+    const userProfile = this.userService.convertToUserProfile(user);
+    const token = await this.jwtService.generateToken(userProfile);
+
+    return {token};
   }
 }
