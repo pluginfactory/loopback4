@@ -1,4 +1,4 @@
-import {AuthenticationComponent} from '@loopback/authentication';
+import {AuthenticationComponent, registerAuthenticationStrategy} from '@loopback/authentication';
 import {BootMixin} from '@loopback/boot';
 import {ApplicationConfig, BindingScope} from '@loopback/core';
 import {RepositoryMixin} from '@loopback/repository';
@@ -9,6 +9,7 @@ import {
 } from '@loopback/rest-explorer';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
+import {JWTAuthenticationStrategy} from './auth-strategies/jwt-strategy';
 import {AuthTokenBindings, PasswordHasherBindings, TokenServiceConstants, UserServiceBindings} from './config';
 import {MySequence} from './sequence';
 import {BcryptHasher} from './services/hash.password.bcrypt';
@@ -21,10 +22,12 @@ export class StarterApplication extends BootMixin(
   constructor(options: ApplicationConfig = {}) {
     super(options);
 
+    registerAuthenticationStrategy(this, JWTAuthenticationStrategy);
     // set up the DI
     this.setUpBindings();
 
     // setup the compoenent related items
+    // to allow @authentication decorator for endpoints
     this.component(AuthenticationComponent);
     // Set up the custom sequence
     this.sequence(MySequence);

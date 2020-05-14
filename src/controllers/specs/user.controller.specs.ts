@@ -141,7 +141,22 @@ export const UserSpecs = {
 				}
 			}
 		}
-	}
+	},
+	whoami: {
+		request: {},
+		response: {
+			responses: {
+				'200': {
+					description: 'The current user profile',
+					content: {
+						'application/json': {
+							schema: User
+						},
+					},
+				},
+			}
+		}
+	},
 };
 
 // /**

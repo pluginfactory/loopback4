@@ -1,4 +1,4 @@
-import {TokenService} from '@loopback/authentication';
+import {authenticate, TokenService} from '@loopback/authentication';
 import {inject} from '@loopback/context';
 import {
   Count,
@@ -14,6 +14,7 @@ import {
   post,
   requestBody
 } from '@loopback/rest';
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {AuthTokenBindings, PasswordHasherBindings, UserServiceBindings} from '../config';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
@@ -119,5 +120,14 @@ export class UserController {
     const token = await this.jwtService.generateToken(userProfile);
 
     return {token};
+  }
+
+  @get('/users/whoami', UserSpecs.whoami.response)
+  @authenticate('jwt')
+  async whoami(
+    @inject(SecurityBindings.USER) userProfile: UserProfile
+  ): Promise<User> {
+    const userId = userProfile[securityId];
+    return this.userRepository.findById(Number(userId));
   }
 }
